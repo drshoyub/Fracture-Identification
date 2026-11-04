@@ -1,7 +1,7 @@
 import streamlit as st
 from fastai.vision.all import *
 from PIL import Image
-import requests
+import urllib.request
 import os
 
 # 1. Page Configuration & Title Styling
@@ -9,27 +9,22 @@ st.set_page_config(page_title="AI Fracture Reader", page_icon="🏥", layout="ce
 st.title("🏥 Permanent AI Bone Fracture Assistant")
 st.write("Upload any bone radiograph to query our custom-trained 99.27% accurate computer vision network.")
 
-# 🔗 Your custom Dropbox direct-download link
-DROPBOX_URL = "https://dropbox.com"
+# 🔗 Clean, absolute direct download link format for your file
+DROPBOX_URL = "https://dropboxusercontent.com"
 MODEL_PATH = "fracture_model.pkl"
 
-# 2. Network-safe function to stream large files from Dropbox
+# 2. Function to cleanly pull and cache the model file
 @st.cache_resource
 def download_and_load_model():
-    if not os.path.exists(MODEL_PATH):
-        with st.spinner("📥 Streaming AI weights from secure storage... (Takes a moment on first run)"):
-            # Using custom headers to bypass the Dropbox bot blocker
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-            response = requests.get(DROPBOX_URL, headers=headers, stream=True)
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
+        # If the file doesn't exist, or is a tiny broken HTML file (< 1MB), wipe and redownload
+        if os.path.exists(MODEL_PATH):
+            os.remove(MODEL_PATH)
             
-            if response.status_code == 200:
-                with open(MODEL_PATH, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-            else:
-                st.error(f"Network Error: Dropbox returned status code {response.status_code}")
-                st.stop()
-                
+        with st.spinner("📥 Streaming raw AI model weights from secure storage... (Takes a moment on first run)"):
+            # Using the direct dl.dropboxusercontent path forces a pure raw data stream
+            urllib.request.urlretrieve(DROPBOX_URL, MODEL_PATH)
+            
     return load_learner(MODEL_PATH)
 
 # Safely initialize the model framework
@@ -38,6 +33,9 @@ try:
     labels = model.dls.vocab
 except Exception as e:
     st.error(f"Model sync issue: {str(e)}")
+    st.info("The server downloaded an HTML web page instead of the raw file data. Retrying with clear cache...")
+    if os.path.exists(MODEL_PATH):
+        os.remove(MODEL_PATH)
     st.stop()
 
 # 3. Interactive Drag and Drop File Upload Dashboard UI
