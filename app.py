@@ -10,7 +10,7 @@ st.title("🏥 Permanent AI Bone Fracture Assistant")
 st.write("Upload any bone radiograph to query our custom-trained 99.27% accurate computer vision network.")
 
 # 🔗 Clean, absolute direct download link format for your file
-DROPBOX_URL = "https://www.dropbox.com/scl/fi/9enslazfyl9qf5huh53ef/fracture_model.pkl?rlkey=k1ksj3vlrooxspdj5zzkmrajy&st=r0f5lucu&dl=1"
+DROPBOX_URL = "https://dropboxusercontent.com"
 MODEL_PATH = "fracture_model.pkl"
 
 # 2. Function to cleanly pull and cache the model file
